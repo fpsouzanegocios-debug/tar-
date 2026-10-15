@@ -50,14 +50,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-24 pt-2 w-full max-w-lg mx-auto px-3.5 sm:px-4 box-border overflow-x-hidden">
-      {/* App Header Branding & Language Switcher */}
-      <header className="relative text-center pt-2 sm:pt-4 space-y-1">
-        <div className="absolute right-0 top-2 sm:top-4">
-          <LanguageSwitch variant="compact" />
-        </div>
+      {/* Top Utility Bar (Language Selector) */}
+      <div className="flex items-center justify-end w-full pt-1 px-1">
+        <LanguageSwitch variant="compact" />
+      </div>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2A1B36] border border-[#E1C38B]/30 text-xs text-[#E1C38B] font-medium tracking-wide mb-1 shadow-sm">
-          <Heart className="w-3.5 h-3.5 fill-[#E1C38B]/30" />
+      {/* App Header Branding */}
+      <header className="text-center space-y-1.5 pt-1">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#2A1B36] border border-[#E1C38B]/30 text-xs text-[#E1C38B] font-medium tracking-wide shadow-sm mx-auto">
+          <Heart className="w-3.5 h-3.5 fill-[#E1C38B]/30 shrink-0" />
           <span>{t.home.oracleTag}</span>
         </div>
         <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-gold-gradient">
