@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Pre-fill user's provided Supabase URL
+// Pre-fill user's provided Supabase credentials
 const DEFAULT_URL = 'https://hijjcxmaqbyusepciadc.supabase.co';
+const DEFAULT_ANON_KEY = 'sb_publishable_Z8PQlOnFsbujaxt1ypZvKg_vE4fUVbL';
 
 export function getSupabaseConfig(): { url: string; anonKey: string } {
   const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -11,7 +12,7 @@ export function getSupabaseConfig(): { url: string; anonKey: string } {
   const storedKey = localStorage.getItem('tarot_supabase_anon_key');
 
   const url = storedUrl || envUrl || DEFAULT_URL;
-  const anonKey = storedKey || envKey || '';
+  const anonKey = storedKey || envKey || DEFAULT_ANON_KEY;
 
   return { url, anonKey };
 }

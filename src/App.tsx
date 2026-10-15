@@ -23,7 +23,8 @@ import { BirthDateOnboardingScreen } from './components/BirthDateOnboardingScree
 import { AdminPanelScreen } from './components/AdminPanelScreen';
 import { InstallAppGuideModal } from './components/InstallAppGuideModal';
 import { NotificationPermissionModal } from './components/NotificationPermissionModal';
-import { getCurrentUser, signOut as authSignOut, isUserAdmin, updateLeadInfo, type AuthUser } from './services/auth';
+import { getCurrentUser, setCurrentSession, signOut as authSignOut, isUserAdmin, updateLeadInfo, type AuthUser } from './services/auth';
+import { getSupabaseClient } from './services/supabase';
 import { 
   checkScheduledReminders, 
   checkPendingBroadcasts, 
@@ -69,6 +70,43 @@ export function App() {
   useEffect(() => {
     setDailyStatusInfo(getDailyReadingStatus(profile.timezone));
   }, [profile.timezone, readings]);
+
+  // Sync Supabase Auth session on launch and listen to login/logout events across tabs/devices
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    client.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+        };
+        setCurrentUser((prev) => prev?.id === authUser.id ? prev : authUser);
+        setCurrentSession(authUser);
+      }
+    });
+
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+        };
+        setCurrentUser(authUser);
+        setCurrentSession(authUser);
+      } else if (_event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setCurrentSession(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Online / Offline listeners
   useEffect(() => {
