@@ -8,12 +8,14 @@ interface NotificationPermissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPermissionUpdated?: (granted: boolean) => void;
+  userId?: string;
 }
 
 export const NotificationPermissionModal: React.FC<NotificationPermissionModalProps> = ({
   isOpen,
   onClose,
   onPermissionUpdated,
+  userId,
 }) => {
   const { t, language } = useLanguage();
   const [isRequesting, setIsRequesting] = useState(false);
@@ -23,7 +25,7 @@ export const NotificationPermissionModal: React.FC<NotificationPermissionModalPr
 
   const handleEnable = async () => {
     setIsRequesting(true);
-    const granted = await requestNotificationPermission();
+    const granted = await requestNotificationPermission(userId);
     setIsRequesting(false);
 
     if (granted) {

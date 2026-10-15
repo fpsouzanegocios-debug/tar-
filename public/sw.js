@@ -140,3 +140,19 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Background Periodic Sync (supported by Android Chrome PWA when app is closed)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'check-tarot-reminders') {
+    event.waitUntil(
+      self.registration.showNotification('Sua Tiragem do Amor está pronta! ✨', {
+        body: 'As 3 cartas do dia aguardam por você para iluminar caminhos e escolhas no amor.',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        vibrate: [200, 100, 200],
+        tag: 'daily-tarot-reminder',
+        data: { url: '/' }
+      })
+    );
+  }
+});
+

@@ -22,8 +22,7 @@ import { ZodiacGlyph } from './ZodiacGlyph';
 import { signOut } from '../services/auth';
 import { 
   requestNotificationPermission, 
-  isNotificationSupported, 
-  getNotificationPermission 
+  isNotificationSupported 
 } from '../services/notifications';
 import { useLanguage } from '../i18n';
 import { LanguageSwitch } from './LanguageSwitch';
@@ -111,15 +110,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const handleToggleReminder = async (checked: boolean) => {
     setReminderEnabled(checked);
-    if (checked && isNotificationSupported() && getNotificationPermission() !== 'granted') {
-      await requestNotificationPermission();
+    if (checked && isNotificationSupported()) {
+      await requestNotificationPermission(profile.id);
     }
   };
 
   const handleToggleZodiacReminder = async (checked: boolean) => {
     setZodiacReminderEnabled(checked);
-    if (checked && isNotificationSupported() && getNotificationPermission() !== 'granted') {
-      await requestNotificationPermission();
+    if (checked && isNotificationSupported()) {
+      await requestNotificationPermission(profile.id);
     }
   };
 

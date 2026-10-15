@@ -1,5 +1,77 @@
 import type { UserProfile, ZodiacSignId } from '../types/tarot';
 import { getTodayDateString } from './storage';
+import { getSupabaseClient, isSupabaseConfigured } from './supabase';
+
+export const VAPID_PUBLIC_KEY = 'BPKlf3JvMU_TFO2L0cwUxBmfAZfRVEekMucrETUN6_0xdgbAP4-WCLA7f2ePz6TRMST01W16nZt5XLFMzT1P47A';
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+export async function subscribeToPushNotifications(userId?: string): Promise<PushSubscription | null> {
+  if (!isNotificationSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return null;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    if (subscription && isSupabaseConfigured()) {
+      const subJson = subscription.toJSON();
+      const endpoint = subJson.endpoint;
+      const p256dh = subJson.keys?.p256dh;
+      const auth = subJson.keys?.auth;
+
+      if (endpoint && p256dh && auth) {
+        const client = getSupabaseClient();
+        if (client) {
+          try {
+            await client.from('push_subscriptions').upsert({
+              endpoint,
+              p256dh,
+              auth,
+              user_id: userId || null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'endpoint' });
+          } catch (e: any) {
+            console.warn('Push sub save note:', e?.message);
+          }
+        }
+      }
+    }
+
+    // Register Periodic Background Sync if available on device (Android Chrome PWA)
+    if ('periodicSync' in reg) {
+      try {
+        await (reg as any).periodicSync.register('check-tarot-reminders', {
+          minInterval: 6 * 60 * 60 * 1000,
+        });
+      } catch {
+        // unsupported or denied
+      }
+    }
+
+    return subscription;
+  } catch (err) {
+    console.warn('Erro ao registrar Push Subscription:', err);
+    return null;
+  }
+}
 
 export interface BroadcastMessage {
   id: string;
@@ -47,11 +119,14 @@ export function getNotificationPermission(): NotificationPermission {
 /**
  * Request notification permission from user
  */
-export async function requestNotificationPermission(): Promise<boolean> {
+export async function requestNotificationPermission(userId?: string): Promise<boolean> {
   if (!isNotificationSupported()) return false;
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
+      // Subscribe to background push
+      await subscribeToPushNotifications(userId);
+
       // Send a welcoming confirmation notification
       await showAppNotification('✨ Notificações ativadas!', {
         body: 'Você receberá os conselhos diários do oráculo e do seu signo no horário escolhido.',

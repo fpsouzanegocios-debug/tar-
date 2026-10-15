@@ -28,7 +28,8 @@ import { getSupabaseClient } from './services/supabase';
 import { 
   checkScheduledReminders, 
   checkPendingBroadcasts, 
-  getNotificationPermission 
+  getNotificationPermission,
+  subscribeToPushNotifications
 } from './services/notifications';
 import { useLanguage } from './i18n';
 
@@ -152,6 +153,8 @@ export function App() {
         const notifShown = localStorage.getItem(`tarot_notif_modal_shown_${currentUser.id}`);
         if (!notifShown && getNotificationPermission() !== 'granted') {
           setShowNotificationModal(true);
+        } else if (getNotificationPermission() === 'granted') {
+          subscribeToPushNotifications(currentUser.id);
         }
       }
     }
@@ -469,6 +472,7 @@ export function App() {
       {/* Post-install Notification Activation Modal */}
       <NotificationPermissionModal
         isOpen={showNotificationModal}
+        userId={currentUser?.id}
         onClose={() => {
           setShowNotificationModal(false);
           if (currentUser?.id) {
