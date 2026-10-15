@@ -85,10 +85,31 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Safe area insets for mobile standalone PWA */
+/* Safe area insets for mobile standalone PWA and notch/status bar devices */
 .safe-pb {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
 }
+
 .safe-pt {
-  padding-top: env(safe-area-inset-top, 16px);
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
+}
+
+/* Standalone PWA mode (when added to Home Screen on mobile) */
+@media all and (display-mode: standalone) {
+  .safe-pt {
+    padding-top: max(env(safe-area-inset-top, 0px), 36px);
+  }
+}
+
+/* iOS devices (iPhone with notch or Dynamic Island in PWA/Safari) */
+@supports (-webkit-touch-callout: none) {
+  .safe-pt {
+    padding-top: max(env(safe-area-inset-top, 0px), 20px);
+  }
+
+  @media all and (display-mode: standalone) {
+    .safe-pt {
+      padding-top: max(env(safe-area-inset-top, 0px), 52px);
+    }
+  }
 }

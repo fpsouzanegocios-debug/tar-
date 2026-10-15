@@ -39,7 +39,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-gradient-to-b from-[#12081B] via-[#1B0F26] to-[#0D0514] text-[#F7EEFB]">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-gradient-to-b from-[#12081B] via-[#1B0F26] to-[#0D0514] text-[#F7EEFB] safe-pt safe-pb">
       <div className="w-full max-w-md mx-auto space-y-6 animate-fadeIn relative">
         
         {/* Top Language Switcher */}

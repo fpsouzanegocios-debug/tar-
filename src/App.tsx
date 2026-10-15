@@ -342,14 +342,14 @@ export function App() {
     <div className="min-h-screen bg-[#1B1026] text-[#F7EEFB] font-sans flex flex-col selection:bg-[#E1C38B]/30 selection:text-[#FFF5E0] overflow-x-hidden w-full">
       {/* Offline Alert Bar */}
       {isOffline && (
-        <div className="bg-amber-900/80 text-amber-200 text-xs py-1 px-4 text-center border-b border-amber-700/50 flex items-center justify-center gap-1.5 z-50">
+        <div className="bg-amber-900/80 text-amber-200 text-xs py-2 px-4 text-center border-b border-amber-700/50 flex items-center justify-center gap-1.5 z-50 safe-pt">
           <WifiOff className="w-3.5 h-3.5 shrink-0" />
           <span className="leading-tight">{t.common.offline}</span>
         </div>
       )}
 
       {/* Main Container */}
-      <main className="flex-1 w-full max-w-xl mx-auto flex flex-col justify-start overflow-x-hidden">
+      <main className={`flex-1 w-full max-w-xl mx-auto flex flex-col justify-start overflow-x-hidden ${isOffline ? '' : 'safe-pt'}`}>
         {/* If inside Revelation View */}
         {(viewingReading || newReadingData) ? (
           <ReadingRevelation
