@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-tarot-bg: #1B1026;
+  --color-tarot-surface: #2A1B36;
+  --color-tarot-surface-light: #382449;
+  --color-tarot-surface-card: #221430;
+  --color-tarot-gold: #E1C38B;
+  --color-tarot-gold-light: #F4DFB8;
+  --color-tarot-gold-dark: #B89657;
+  --color-tarot-text: #F7EEFB;
+  --color-tarot-muted: #C1AFCE;
+  --color-tarot-border: rgba(225, 195, 139, 0.25);
+  --color-tarot-border-glow: rgba(225, 195, 139, 0.45);
+
+  --font-serif: "Cinzel", "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+:root {
+  background-color: #1B1026;
+  color: #F7EEFB;
+  font-family: var(--font-sans);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: #1B1026;
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, rgba(85, 36, 117, 0.25) 0%, transparent 65%),
+    radial-gradient(ellipse at 80% 80%, rgba(225, 195, 139, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 60%, rgba(60, 20, 95, 0.2) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: #F7EEFB;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #1B1026;
+}
+::-webkit-scrollbar-thumb {
+  background: #382449;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E1C38B;
+}
+
+/* Card 3D Flip Effects */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Gold glow utilities */
+.gold-glow {
+  box-shadow: 0 0 25px rgba(225, 195, 139, 0.35);
+}
+.gold-border-glow {
+  box-shadow: 0 0 15px rgba(225, 195, 139, 0.25), inset 0 0 15px rgba(225, 195, 139, 0.15);
+}
+.text-gold-gradient {
+  background: linear-gradient(135deg, #FFF1D6 0%, #E1C38B 50%, #B89657 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Safe area insets for mobile standalone PWA */
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.safe-pt {
+  padding-top: env(safe-area-inset-top, 16px);
+}
