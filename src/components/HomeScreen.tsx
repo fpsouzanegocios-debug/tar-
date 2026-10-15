@@ -28,7 +28,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onResetToday,
   onNavigateToSigno,
 }) => {
-  const { t, translateCardName, translateSign } = useLanguage();
+  const { t, translateCardName, translateSign, language } = useLanguage();
   const [countdown, setCountdown] = useState<string>('');
 
   useEffect(() => {
@@ -67,6 +67,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           {profile.name ? `${t.home.hello}, ${profile.name}` : t.home.helloTraveler} — {t.home.heroSub}
         </p>
       </header>
+
+      {/* Hero Art Banner */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#E1C38B]/35 shadow-2xl shadow-purple-950/80 aspect-[16/8] sm:aspect-[16/7] group gold-border-glow">
+        <img
+          src="/tarot_hero.jpg"
+          alt="Tarô do Amor"
+          className="w-full h-full object-cover object-center filter brightness-95 contrast-105 group-hover:scale-105 transition-transform duration-700 ease-out"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1B1026] via-transparent to-transparent opacity-80 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1B1026]/40 via-transparent to-[#1B1026]/40 pointer-events-none" />
+        <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 right-3 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1B1026]/85 backdrop-blur-md border border-[#E1C38B]/40 text-[10px] sm:text-xs text-[#E1C38B] font-medium shadow-md">
+            <Sparkles className="w-3 h-3 text-[#E1C38B] animate-pulse" />
+            <span>{language === 'es' ? 'Arcanos del Amor y la Sabiduría' : 'Arcanos do Amor & Sabedoria'}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Daily Reading Action Card */}
       <section 

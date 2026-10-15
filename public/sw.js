@@ -5,7 +5,8 @@ const CORE_ASSETS = [
   '/index.html',
   '/manifest.json',
   '/icon.svg',
-  '/card_back.svg'
+  '/card_back.svg',
+  '/tarot_hero.jpg'
 ];
 
 self.addEventListener('install', (event) => {
