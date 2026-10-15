@@ -22,7 +22,9 @@ import { ZodiacGlyph } from './ZodiacGlyph';
 import { signOut } from '../services/auth';
 import { 
   requestNotificationPermission, 
-  isNotificationSupported 
+  isNotificationSupported,
+  syncPushSubscriptionPreferences,
+  triggerTestBackgroundPush
 } from '../services/notifications';
 import { useLanguage } from '../i18n';
 import { LanguageSwitch } from './LanguageSwitch';
@@ -89,6 +91,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
+  const [isTestingPush, setIsTestingPush] = useState(false);
+  const [testPushFeedback, setTestPushFeedback] = useState<string | null>(null);
+
   const handleSaveProfile = () => {
     const updated: UserProfile = {
       ...profile,
@@ -104,6 +109,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     };
     saveLocalProfile(updated);
     onUpdateProfile(updated);
+    syncPushSubscriptionPreferences(updated);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
@@ -113,6 +119,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (checked && isNotificationSupported()) {
       await requestNotificationPermission(profile.id);
     }
+    syncPushSubscriptionPreferences({
+      ...profile,
+      reminderEnabled: checked,
+      reminderTime,
+      timezone,
+    });
   };
 
   const handleToggleZodiacReminder = async (checked: boolean) => {
@@ -120,6 +132,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (checked && isNotificationSupported()) {
       await requestNotificationPermission(profile.id);
     }
+    syncPushSubscriptionPreferences({
+      ...profile,
+      zodiacReminderEnabled: checked,
+      zodiacReminderTime,
+      timezone,
+    });
+  };
+
+  const handleTestClosedAppPush = async () => {
+    setIsTestingPush(true);
+    setTestPushFeedback('⏳ Agendado para daqui a 5s! Feche este app ou bloqueie a tela do celular agora!');
+    const res = await triggerTestBackgroundPush(5);
+    if (!res.success) {
+      setTestPushFeedback(`❌ ${res.message}`);
+    } else {
+      setTestPushFeedback(`✨ ${res.message}`);
+    }
+    setTimeout(() => {
+      setIsTestingPush(false);
+    }, 7000);
   };
 
   const handleLogout = async () => {
@@ -321,6 +353,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
           )}
         </div>
+
+        {/* Test Push with Closed App & Mobile Guidance */}
+        {(reminderEnabled || zodiacReminderEnabled) && (
+          <div className="pt-2 border-t border-white/5 space-y-2">
+            <button
+              type="button"
+              onClick={handleTestClosedAppPush}
+              disabled={isTestingPush}
+              className="w-full py-2.5 px-3 rounded-xl bg-purple-900/30 border border-[#E1C38B]/40 text-[#F4DFB8] hover:bg-purple-900/50 text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+            >
+              <Smartphone className="w-4 h-4 text-[#E1C38B]" />
+              <span>{isTestingPush ? 'Agendado! Feche o app agora...' : 'Testar Notificação com App Fechado (5s)'}</span>
+            </button>
+            {testPushFeedback && (
+              <div className="text-[11px] text-center text-[#F4DFB8] bg-[#231535] p-2.5 rounded-xl border border-[#E1C38B]/30 shadow-md">
+                {testPushFeedback}
+              </div>
+            )}
+            <p className="text-[10px] text-[#A894B8] text-center leading-relaxed">
+              📲 <strong>Dica para Celular:</strong> No <strong>iPhone (iOS)</strong>, adicione à Tela de Início pelo Safari para receber com o app fechado. No <strong>Android</strong>, basta permitir as notificações do navegador.
+            </p>
+          </div>
+        )}
 
         <button
           onClick={handleSaveProfile}

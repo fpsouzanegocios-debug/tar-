@@ -149,6 +149,22 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
         sentBy: currentUser.email || 'idealconsumo',
       });
 
+      // Send real cloud Web Push to mobile devices with app closed
+      try {
+        await fetch('/api/send-reminders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'broadcast',
+            title: customTitle.trim(),
+            body: customBody.trim(),
+            target: customTarget,
+          }),
+        });
+      } catch (pushErr) {
+        console.warn('Push delivery notice:', pushErr);
+      }
+
       setBroadcastList(getBroadcastMessages());
       setCustomTitle('');
       setCustomBody('');

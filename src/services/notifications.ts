@@ -15,7 +15,17 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-export async function subscribeToPushNotifications(userId?: string): Promise<PushSubscription | null> {
+export async function subscribeToPushNotifications(
+  userId?: string,
+  profilePreferences?: {
+    reminderTime?: string;
+    reminderEnabled?: boolean;
+    zodiacReminderTime?: string;
+    zodiacReminderEnabled?: boolean;
+    zodiacSign?: ZodiacSignId;
+    timezone?: string;
+  }
+): Promise<PushSubscription | null> {
   if (!isNotificationSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     return null;
   }
@@ -46,6 +56,13 @@ export async function subscribeToPushNotifications(userId?: string): Promise<Pus
               p256dh,
               auth,
               user_id: userId || null,
+              reminder_time: profilePreferences?.reminderTime || '09:00',
+              reminder_enabled: profilePreferences?.reminderEnabled !== false,
+              zodiac_reminder_time: profilePreferences?.zodiacReminderTime || '08:30',
+              zodiac_reminder_enabled: profilePreferences?.zodiacReminderEnabled || false,
+              zodiac_sign: profilePreferences?.zodiacSign || null,
+              timezone: profilePreferences?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo',
+              user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
               updated_at: new Date().toISOString(),
             }, { onConflict: 'endpoint' });
           } catch (e: any) {
@@ -70,6 +87,100 @@ export async function subscribeToPushNotifications(userId?: string): Promise<Pus
   } catch (err) {
     console.warn('Erro ao registrar Push Subscription:', err);
     return null;
+  }
+}
+
+/**
+ * Synchronize the user's scheduled reminder time and preferences with the cloud push subscription
+ */
+export async function syncPushSubscriptionPreferences(profile: UserProfile): Promise<void> {
+  if (!isNotificationSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.getSubscription();
+
+    if (subscription && isSupabaseConfigured()) {
+      const subJson = subscription.toJSON();
+      const endpoint = subJson.endpoint;
+      const p256dh = subJson.keys?.p256dh;
+      const auth = subJson.keys?.auth;
+
+      if (endpoint && p256dh && auth) {
+        const client = getSupabaseClient();
+        if (client) {
+          await client.from('push_subscriptions').upsert({
+            endpoint,
+            p256dh,
+            auth,
+            user_id: profile.id || null,
+            reminder_time: profile.reminderTime || '09:00',
+            reminder_enabled: profile.reminderEnabled,
+            zodiac_reminder_time: profile.zodiacReminderTime || '08:30',
+            zodiac_reminder_enabled: profile.zodiacReminderEnabled,
+            zodiac_sign: profile.zodiacSign || null,
+            timezone: profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo',
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'endpoint' });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Erro ao sincronizar preferências push:', err);
+  }
+}
+
+/**
+ * Request a test push notification to be sent to this device in X seconds (allowing user to close the app and test background delivery)
+ */
+export async function triggerTestBackgroundPush(delaySeconds: number = 5): Promise<{ success: boolean; message: string }> {
+  if (!isNotificationSupported() || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { success: false, message: 'Notificações não são suportadas neste navegador.' };
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await subscribeToPushNotifications();
+    }
+
+    if (!subscription) {
+      return { success: false, message: 'Permissão de notificação necessária.' };
+    }
+
+    const subJson = subscription.toJSON();
+
+    const response = await fetch('/api/send-reminders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'test_delay',
+        delaySeconds,
+        subscription: subJson,
+        title: '✨ Teste com App Fechado!',
+        body: 'Parabéns! Suas notificações do Oráculo do Amor estão funcionando perfeitamente em segundo plano!',
+      }),
+    });
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: `Disparo agendado para daqui a ${delaySeconds}s! Feche o aplicativo agora e bloqueie o celular para ver chegar.`,
+      };
+    } else {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: errData.error || 'Erro ao comunicar com o servidor de push.',
+      };
+    }
+  } catch (err: any) {
+    return { success: false, message: err?.message || 'Falha na conexão de teste.' };
   }
 }
 
@@ -124,8 +235,24 @@ export async function requestNotificationPermission(userId?: string): Promise<bo
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      // Subscribe to background push
-      await subscribeToPushNotifications(userId);
+      // Subscribe to background push with saved preferences if available
+      let pref: any = undefined;
+      try {
+        const stored = (userId ? localStorage.getItem(`tarot_user_profile_${userId}`) : null) || localStorage.getItem('tarot_user_profile');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          pref = {
+            reminderTime: parsed.reminderTime,
+            reminderEnabled: parsed.reminderEnabled !== false,
+            zodiacReminderTime: parsed.zodiacReminderTime,
+            zodiacReminderEnabled: parsed.zodiacReminderEnabled,
+            zodiacSign: parsed.zodiacSign,
+            timezone: parsed.timezone,
+          };
+        }
+      } catch {}
+
+      await subscribeToPushNotifications(userId, pref);
 
       // Send a welcoming confirmation notification
       await showAppNotification('✨ Notificações ativadas!', {
